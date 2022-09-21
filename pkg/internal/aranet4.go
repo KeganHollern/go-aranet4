@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"time"
@@ -147,7 +146,7 @@ func (dev *Aranet4Device) DumpDevice() error {
 
 // ------------------------ ar4 read operations & parsing
 
-func (dev *Aranet4Device) Current() (*readings.DeviceReadings, error) {
+func (dev *Aranet4Device) Current(detailed bool) (*readings.DeviceReadings, error) {
 
 	svc, err := dev.getService(AR4_SERVICE)
 	if err != nil {
@@ -156,7 +155,7 @@ func (dev *Aranet4Device) Current() (*readings.DeviceReadings, error) {
 	if svc == nil {
 		return nil, err
 	}
-	char, err := dev.getCharacteristic(svc, AR4_READ_CURRENT_READINGS)
+	char, err := dev.getCharacteristic(svc, AR4_READ_CURRENT_READINGS) // use AR4_READ_CURRENT_READINGS_DET to include interval & ago
 	if err != nil {
 		return nil, err
 	}
@@ -166,19 +165,12 @@ func (dev *Aranet4Device) Current() (*readings.DeviceReadings, error) {
 	if err != nil {
 		return nil, err
 	}
-	if n != 9 {
+	if n != 9 && n != 13 {
 		// ????
 		return nil, errors.New("malformatted response from device")
 	}
-	//<HHHBBB
-	//littleEndian
 	data := &readings.DeviceReadings{}
-	data.CO2 = binary.LittleEndian.Uint16(buf[0:2])
-	data.Temperature = binary.LittleEndian.Uint16(buf[2:4])
-	data.Pressure = binary.LittleEndian.Uint16(buf[4:6])
-	data.Humidity = buf[6]
-	data.Battery = buf[7]
-	data.Status = readings.DeviceStatus(buf[8])
+	data.Decode(buf, n) // supports CURRENT_READINGS and CURRENT_READINGS_DET
 
 	return data, nil
 }

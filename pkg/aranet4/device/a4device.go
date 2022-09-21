@@ -13,7 +13,20 @@ type A4Device interface {
 	Disconnect()
 	Address() string
 
-	Current() (*readings.DeviceReadings, error)
+	// extracts current readings (detailed includes interval and ago)
+	Current(detailed bool) (*readings.DeviceReadings, error)
+	// get interval for datapoint logging
+	Interval() (uint16, error)
+	// get device name
+	Name() (string, error)
+	// get device version
+	Version() (string, error)
+	// return time of last update
+	LastUpdate() (time.Time, error)
+	// how many datapoints are logged to the device
+	TotalReadings() (uint16, error)
+
+	//TODO: add a routine which returns datapoints (see get_records in python client)
 
 	DumpDevice() error
 }
