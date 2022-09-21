@@ -19,9 +19,17 @@ type Aranet4Device struct {
 }
 
 func FindDevices() ([]string, error) {
+	data := make(map[string]bool)
 	var results []string
 	globalAdapter.Enable()
 	err := globalAdapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
+		// check if we've looped through all devices & stop scan once we have
+		_, exists := data[result.Address.String()]
+		if exists {
+			adapter.StopScan()
+		}
+		data[result.Address.String()] = true
+
 		if strings.Contains(strings.ToLower(result.LocalName()), "aranet4") {
 			results = append(results, result.Address.String())
 		}
