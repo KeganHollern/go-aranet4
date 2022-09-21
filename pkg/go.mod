@@ -2,6 +2,8 @@ module github.com/KeganHollern/go-aranet4/pkg
 
 go 1.19
 
+require tinygo.org/x/bluetooth v0.5.0
+
 require (
 	github.com/JuulLabs-OSS/cbgo v0.0.2 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
@@ -11,5 +13,4 @@ require (
 	github.com/muka/go-bluetooth v0.0.0-20210812063148-b6c83362e27d // indirect
 	github.com/sirupsen/logrus v1.6.0 // indirect
 	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect
-	tinygo.org/x/bluetooth v0.5.0 // indirect
 )
