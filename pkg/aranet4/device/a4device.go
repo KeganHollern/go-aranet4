@@ -1,6 +1,9 @@
-package aranet4
+package device
 
 import (
+	"time"
+
+	"github.com/KeganHollern/go-aranet4/pkg/aranet4/readings"
 	"github.com/KeganHollern/go-aranet4/pkg/internal"
 )
 
@@ -8,6 +11,11 @@ import (
 type A4Device interface {
 	Connect() error
 	Disconnect()
+	Address() string
+
+	Current() (*readings.DeviceReadings, error)
+
+	DumpDevice() error
 }
 
 // NewDeviceFromMAC returns an A4Device from the provided bluetooth MAC address.
@@ -33,13 +41,14 @@ func NewDeviceFromMAC(MAC string) (A4Device, error) {
 // GetNearbyDevices returns a list of A4Device for each nearby Aranet4 bluetooth device.
 // Note that only paired Aranet4 devices are returned.
 // Devices which fail to connect are dropped without error.
-func GetNearbyDevices() ([]A4Device, error) {
+func GetNearbyDevices(timeout time.Duration) ([]A4Device, error) {
 	var results []A4Device
-	macs, err := internal.FindDevices()
+	macs, err := internal.FindDevices(timeout)
 	if err != nil {
 		return nil, err
 	}
 
+	// inefficient as NewDevice runs another scan but idc
 	for _, mac := range macs {
 		device, err := NewDeviceFromMAC(mac)
 		if err != nil {
