@@ -116,26 +116,7 @@ func (dev *Aranet4Device) Address() string {
 	}
 	return dev.Mac
 }
-func (dev *Aranet4Device) CO2() (float64, error) {
-	svc, err := dev.getService(AR4_READ_CURRENT_READINGS)
-	if err != nil {
-		return 0, err
-	}
-	if svc == nil {
-		return 0, errors.New("service not found")
-	}
 
-	return 0, errors.New("incomplete")
-}
-func (dev *Aranet4Device) Temp() (float64, error) {
-	return 0, errors.New("incomplete")
-}
-func (dev *Aranet4Device) Humidity() (float64, error) {
-	return 0, errors.New("incomplete")
-}
-func (dev *Aranet4Device) Pressure() (float64, error) {
-	return 0, errors.New("incomplete")
-}
 func (dev *Aranet4Device) DumpDevice() error {
 	fmt.Println("----- DUMP ------")
 	svcs, err := dev.device.DiscoverServices(nil)
@@ -164,7 +145,7 @@ func (dev *Aranet4Device) DumpDevice() error {
 	return nil
 }
 
-// ------------------------
+// ------------------------ ar4 read operations & parsing
 
 func (dev *Aranet4Device) Current() (*readings.DeviceReadings, error) {
 
@@ -201,6 +182,8 @@ func (dev *Aranet4Device) Current() (*readings.DeviceReadings, error) {
 
 	return data, nil
 }
+
+// ------------------------ helpers for ar4 UUIDs (todo format uuids into byte[16])
 
 func (dev *Aranet4Device) getCharacteristic(svc *bluetooth.DeviceService, a4_uuid string) (*bluetooth.DeviceCharacteristic, error) {
 	if dev.device == nil {
