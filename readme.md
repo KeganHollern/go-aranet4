@@ -1,6 +1,6 @@
 # Go-Aranet4
 
-Go-Aranet4 is a go implementation for interacting with the [Aranet4](#) CO2 Monitor.
+Go-Aranet4 is a go implementation for interacting with the [Aranet4](https://aranet.com/products/aranet4) CO2 Monitor.
 
 I plan to write more eventially.
 
