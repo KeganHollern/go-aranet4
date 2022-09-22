@@ -40,9 +40,8 @@ func main() {
 	defer device.Disconnect() // defer disconnection
 	logrus.WithField("mac", device.Address()).Infoln("connected")
 
-	time.Sleep(5 * time.Minute)
+	time.Sleep(5 * time.Minute) // because of this delay the action below times out
 
-	// dump details
 	readings, err := device.Current(true)
 	if err != nil {
 		logrus.WithError(err).Errorln("failed to read from device")
