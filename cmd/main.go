@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/KeganHollern/go-aranet4/pkg/aranet4"
-	"github.com/KeganHollern/go-aranet4/pkg/aranet4/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -41,6 +40,8 @@ func main() {
 	defer device.Disconnect() // defer disconnection
 	logrus.WithField("mac", device.Address()).Infoln("connected")
 
+	time.Sleep(5 * time.Minute)
+
 	// dump details
 	readings, err := device.Current(true)
 	if err != nil {
@@ -48,16 +49,4 @@ func main() {
 		return
 	}
 	logrus.WithField("readings", readings).Infoln("device read successfully")
-
-	// get some accurate measurements
-	cancel, err := device.Subscribe(func(readings *types.A4Data) {
-		logrus.WithField("readings", readings).Infoln("subscription event")
-	})
-	if err != nil {
-		logrus.WithError(err).Errorln("failed to subscribe to device")
-	}
-
-	time.Sleep(time.Minute * 6)
-	cancel()
-	time.Sleep(time.Minute * 6)
 }

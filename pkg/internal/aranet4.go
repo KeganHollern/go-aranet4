@@ -146,31 +146,25 @@ func (dev *Aranet4Device) DumpDevice() error {
 
 // ------------------------ fun bluetooth stuff
 func (dev *Aranet4Device) Subscribe(callback func(data *types.A4Data)) (func(), error) {
-
-	svc, err := dev.get(AR4_SERVICE, AR4_READ_CURRENT_READINGS)
-	if err != nil {
-		return func() {}, err
-	}
-
-	// aranet 4 does not support notifications (at least not this kind)
-	// we'll build a goroutine that gathers data & periodically calls Current() to get the latest data
-	// may need to put a mutex on CURRENT if it causes bluetooth issues when called from multiple routines
-
-	// so its impossible to disable this "enable notifications" once set ?!
-	unsubscribed := false
-	err = svc.EnableNotifications(func(buf []byte) {
-		if unsubscribed {
-			return
+	subscribed := true
+	go func() {
+		for subscribed {
+			// failing after timeout (connection drops?)
+			data, err := dev.Current(true)
+			if err != nil {
+				continue
+			}
+			callback(data)
+			// figure out when the next data update is going to happen
+			interval := time.Duration(data.Interval) * time.Second
+			last := time.Now().Add(time.Duration(data.Ago*-1) * time.Second)
+			next := last.Add(interval)
+			time.Sleep(time.Until(next) + (time.Second * 5)) // wait until the next data update (and 5 seconds after as a net)
 		}
-		data := &types.A4Data{Raw: buf}
-		err = data.Decode(buf)
-		callback(data)
-	})
-	if err != nil {
-		return func() {}, err
-	}
+	}()
+
 	return func() {
-		unsubscribed = true
+		subscribed = false
 	}, nil
 }
 
