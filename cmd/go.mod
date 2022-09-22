@@ -3,11 +3,11 @@ module github.com/KeganHollern/go-aranet4/cmd
 go 1.19
 
 require (
-	github.com/KeganHollern/go-aranet4/pkg v0.0.0
+	github.com/KeganHollern/go-aranet4/pkg v0.0.1
 	github.com/sirupsen/logrus v1.9.0
 )
 
-replace github.com/KeganHollern/go-aranet4/pkg v0.0.0 => ../pkg
+replace github.com/KeganHollern/go-aranet4/pkg v0.0.1 => ../pkg
 
 require (
 	github.com/JuulLabs-OSS/cbgo v0.0.2 // indirect

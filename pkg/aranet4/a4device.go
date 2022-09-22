@@ -1,9 +1,9 @@
-package device
+package aranet4
 
 import (
 	"time"
 
-	"github.com/KeganHollern/go-aranet4/pkg/aranet4/readings"
+	"github.com/KeganHollern/go-aranet4/pkg/aranet4/types"
 	"github.com/KeganHollern/go-aranet4/pkg/internal"
 )
 
@@ -14,7 +14,7 @@ type A4Device interface {
 	Address() string
 
 	// extracts current readings (detailed includes interval and ago)
-	Current(detailed bool) (*readings.DeviceReadings, error)
+	Current(detailed bool) (*types.A4Data, error)
 	// get interval for datapoint logging
 	Interval() (uint16, error)
 	// get device name
@@ -27,6 +27,14 @@ type A4Device interface {
 	TotalReadings() (uint16, error)
 
 	//TODO: add a routine which returns datapoints (see get_records in python client)
+
+	// subscribe to get notified when new data becomes available
+	//	cancel, err := Subscribe(func(data *types.A4Data) {
+	//		fmt.Println("data", data)
+	//	})
+	//	...
+	//	cancel() // unsubscribe safely
+	Subscribe(callback func(data *types.A4Data)) (func(), error)
 
 	DumpDevice() error
 }
