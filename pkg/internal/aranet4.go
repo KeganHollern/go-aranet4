@@ -2,12 +2,11 @@ package internal
 
 import (
 	"context"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/KeganHollern/go-aranet4/pkg/aranet4/readings"
+	"github.com/KeganHollern/go-aranet4/pkg/aranet4/types"
 	"tinygo.org/x/bluetooth"
 )
 
@@ -145,18 +144,74 @@ func (dev *Aranet4Device) DumpDevice() error {
 	return nil
 }
 
+// ------------------------ fun bluetooth stuff
+func (dev *Aranet4Device) Subscribe(callback func(data *types.A4Data)) (func(), error) {
+	subscribed := true
+	go func() {
+		for subscribed {
+			// failing after timeout (connection drops?)
+			data, err := dev.Current(true)
+			if err != nil {
+				continue
+			}
+			callback(data)
+			// figure out when the next data update is going to happen
+			interval := time.Duration(data.Interval) * time.Second
+			last := time.Now().Add(time.Duration(data.Ago*-1) * time.Second)
+			next := last.Add(interval)
+			time.Sleep(time.Until(next) + (time.Second * 5)) // wait until the next data update (and 5 seconds after as a net)
+		}
+	}()
+
+	return func() {
+		subscribed = false
+	}, nil
+}
+
 // ------------------------ ar4 read operations & parsing
 
-func (dev *Aranet4Device) Current() (*readings.DeviceReadings, error) {
+func (dev *Aranet4Device) Current(detailed bool) (*types.A4Data, error) {
 
-	svc, err := dev.getService(AR4_SERVICE)
+	charUUID := AR4_READ_CURRENT_READINGS
+	if detailed {
+		charUUID = AR4_READ_CURRENT_READINGS_DET
+	}
+	buf, err := dev.read(AR4_SERVICE, charUUID)
 	if err != nil {
 		return nil, err
 	}
-	if svc == nil {
+	data := &types.A4Data{Raw: buf}
+	err = data.Decode(buf) // supports CURRENT_READINGS and CURRENT_READINGS_DET
+	if err != nil {
 		return nil, err
 	}
-	char, err := dev.getCharacteristic(svc, AR4_READ_CURRENT_READINGS)
+	return data, nil
+}
+
+func (dev *Aranet4Device) Interval() (uint16, error) {
+	return 0, errors.New("not done")
+}
+
+func (dev *Aranet4Device) Name() (string, error) {
+	return "", errors.New("not done")
+}
+
+func (dev *Aranet4Device) Version() (string, error) {
+	return "", errors.New("not done")
+}
+
+func (dev *Aranet4Device) LastUpdate() (time.Time, error) {
+	return time.Now(), errors.New("not done")
+}
+
+func (dev *Aranet4Device) TotalReadings() (uint16, error) {
+	return 0, errors.New("not done")
+}
+
+// ------------------------ helpers for ar4 UUIDs (todo format uuids into byte[16])
+
+func (dev *Aranet4Device) read(a4_uuid_svc string, a4_uuid_char string) ([]byte, error) {
+	char, err := dev.get(a4_uuid_svc, a4_uuid_char)
 	if err != nil {
 		return nil, err
 	}
@@ -166,24 +221,19 @@ func (dev *Aranet4Device) Current() (*readings.DeviceReadings, error) {
 	if err != nil {
 		return nil, err
 	}
-	if n != 9 {
-		// ????
-		return nil, errors.New("malformatted response from device")
-	}
-	//<HHHBBB
-	//littleEndian
-	data := &readings.DeviceReadings{}
-	data.CO2 = binary.LittleEndian.Uint16(buf[0:2])
-	data.Temperature = binary.LittleEndian.Uint16(buf[2:4])
-	data.Pressure = binary.LittleEndian.Uint16(buf[4:6])
-	data.Humidity = buf[6]
-	data.Battery = buf[7]
-	data.Status = readings.DeviceStatus(buf[8])
 
-	return data, nil
+	return buf[:n], nil
 }
-
-// ------------------------ helpers for ar4 UUIDs (todo format uuids into byte[16])
+func (dev *Aranet4Device) get(a4_uuid_svc string, a4_uuid_char string) (*bluetooth.DeviceCharacteristic, error) {
+	svc, err := dev.getService(a4_uuid_svc)
+	if err != nil {
+		return nil, err
+	}
+	if svc == nil {
+		return nil, err
+	}
+	return dev.getCharacteristic(svc, a4_uuid_char)
+}
 
 func (dev *Aranet4Device) getCharacteristic(svc *bluetooth.DeviceService, a4_uuid string) (*bluetooth.DeviceCharacteristic, error) {
 	if dev.device == nil {

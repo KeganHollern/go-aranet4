@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/KeganHollern/go-aranet4/pkg/aranet4/device"
+	"github.com/KeganHollern/go-aranet4/pkg/aranet4"
 	"github.com/sirupsen/logrus"
 )
 
@@ -11,7 +11,7 @@ func main() {
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.Infoln("starting go-aranet4 sample")
 
-	devices, err := device.GetNearbyDevices(time.Second * 5)
+	devices, err := aranet4.GetNearbyDevices(time.Second * 5)
 	if err != nil {
 		logrus.WithError(err).Fatalln("failed to get nearby devices")
 	}
@@ -40,13 +40,12 @@ func main() {
 	defer device.Disconnect() // defer disconnection
 	logrus.WithField("mac", device.Address()).Infoln("connected")
 
-	// dump details
-	readings, err := device.Current()
+	time.Sleep(5 * time.Minute) // because of this delay the action below times out
+
+	readings, err := device.Current(true)
 	if err != nil {
 		logrus.WithError(err).Errorln("failed to read from device")
 		return
 	}
 	logrus.WithField("readings", readings).Infoln("device read successfully")
-
-	// get some accurate measurements
 }
